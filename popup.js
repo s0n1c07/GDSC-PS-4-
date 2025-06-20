@@ -1,24 +1,56 @@
 // Popup interface controller
+import { LlamaCpp } from "./llama-st/llama.js";
 class PopupController {
   constructor() {
+    this.engine = null;
     this.summaries = [];
-    this.status = { initialized: false, model: '' };
+    this.status = { initialized: false, model: "" };
     this.init();
   }
 
   async init() {
     this.setupEventListeners();
-    await this.loadStatus();
+
+    // 1) Initialize the LLM engine
+    try {
+      this.engine = await LlamaCpp.create({
+        wasmUrl: chrome.runtime.getURL("llama-st/llama.wasm"),
+        modelUrl: chrome.runtime.getURL("llama-st/models/model.gguf"),
+      });
+      this.status = { initialized: true, model: "TinyLlama-GGUF" };
+
+      this.status = { initialized: true, model: "phi-2-q4f16_1-MLC" };
+    } catch (e) {
+      console.error("LLM init failed", e);
+      this.status = { initialized: false, model: "Error" };
+    }
+    this.updateStatusDisplay();
+
+    // 2) Load any already‐summarized items
     await this.loadSummaries();
+
+    // 3) Render the list and stats
     this.updateDisplay();
   }
-
+  async generateSummary(text) {
+    let result = "";
+    await this.engine.run({
+      prompt: `Summarize:\n\n${text}\n\nSummary:`,
+      ctx_size: 2048,
+      temp: 0.7,
+      n_predict: 200,
+      no_display_prompt: true,
+      callback: chunk => { result += chunk; }
+    });
+    return result.trim();
+  }
+  
   setupEventListeners() {
-    document.getElementById('refreshBtn').addEventListener('click', () => {
+    document.getElementById("refreshBtn").addEventListener("click", () => {
       this.refresh();
     });
 
-    document.getElementById('settingsBtn').addEventListener('click', () => {
+    document.getElementById("settingsBtn").addEventListener("click", () => {
       this.openSettings();
     });
 
@@ -30,58 +62,62 @@ class PopupController {
 
   async loadStatus() {
     try {
-      const response = await chrome.runtime.sendMessage({ action: 'getStatus' });
+      const response = await chrome.runtime.sendMessage({
+        action: "getStatus",
+      });
       this.status = response;
       this.updateStatusDisplay();
     } catch (error) {
-      console.error('Failed to load status:', error);
-      this.status = { initialized: false, model: 'Error' };
+      console.error("Failed to load status:", error);
+      this.status = { initialized: false, model: "Error" };
       this.updateStatusDisplay();
     }
   }
 
   async loadSummaries() {
     try {
-      const summaries = await chrome.runtime.sendMessage({ action: 'getSummaries' });
+      const summaries = await chrome.runtime.sendMessage({
+        action: "getSummaries",
+      });
       this.summaries = summaries || [];
       this.updateSummariesDisplay();
       this.updateStats();
     } catch (error) {
-      console.error('Failed to load summaries:', error);
-      this.showError('Failed to load summaries');
+      console.error("Failed to load summaries:", error);
+      this.showError("Failed to load summaries");
     }
   }
 
   updateStatusDisplay() {
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
 
     if (this.status.initialized) {
-      statusDot.className = 'status-dot';
+      statusDot.className = "status-dot";
       statusText.textContent = `Ready • ${this.status.model}`;
     } else {
-      statusDot.className = 'status-dot loading';
-      statusText.textContent = 'Loading AI Model...';
+      statusDot.className = "status-dot loading";
+      statusText.textContent = "Loading AI Model...";
     }
   }
 
   updateStats() {
-    const totalCount = document.getElementById('totalCount');
-    const todayCount = document.getElementById('todayCount');
+    const totalCount = document.getElementById("totalCount");
+    const todayCount = document.getElementById("todayCount");
 
     totalCount.textContent = this.summaries.length;
 
     // Count today's items
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayItems = this.summaries.filter(item => 
-      new Date(item.timestamp) >= today
+    const todayItems = this.summaries.filter(
+      (item) => new Date(item.timestamp) >= today
     );
     todayCount.textContent = todayItems.length;
   }
 
   updateSummariesDisplay() {
-    const itemsList = document.getElementById('itemsList');
+    const itemsList = document.getElementById("itemsList");
 
     if (this.summaries.length === 0) {
       itemsList.innerHTML = this.getEmptyStateHTML();
@@ -90,14 +126,14 @@ class PopupController {
 
     const itemsHTML = this.summaries
       .slice(0, 10) // Show latest 10 items
-      .map(item => this.createItemHTML(item))
-      .join('');
+      .map((item) => this.createItemHTML(item))
+      .join("");
 
     itemsList.innerHTML = itemsHTML;
 
     // Add click handlers
-    itemsList.querySelectorAll('.item').forEach((element, index) => {
-      element.addEventListener('click', () => {
+    itemsList.querySelectorAll(".item").forEach((element, index) => {
+      element.addEventListener("click", () => {
         this.openItem(this.summaries[index]);
       });
     });
@@ -106,7 +142,7 @@ class PopupController {
   createItemHTML(item) {
     const timeAgo = this.getTimeAgo(item.timestamp);
     const domain = this.getDomain(item.url);
-    const summary = item.summary || 'Processing...';
+    const summary = item.summary || "Processing...";
     const tags = item.tags || [];
 
     return `
@@ -117,11 +153,18 @@ class PopupController {
         </div>
         <div class="item-title">${this.escapeHtml(item.title)}</div>
         <div class="item-summary">${this.escapeHtml(summary)}</div>
-        ${tags.length > 0 ? `
+        ${
+          tags.length > 0
+            ? `
           <div class="item-tags">
-            ${tags.slice(0, 3).map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
+            ${tags
+              .slice(0, 3)
+              .map((tag) => `<span class="tag">${this.escapeHtml(tag)}</span>`)
+              .join("")}
           </div>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
     `;
   }
@@ -145,7 +188,7 @@ class PopupController {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return 'Just now';
+    if (minutes < 1) return "Just now";
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
@@ -154,23 +197,23 @@ class PopupController {
 
   getDomain(url) {
     try {
-      return new URL(url).hostname.replace('www.', '');
+      return new URL(url).hostname.replace("www.", "");
     } catch {
-      return 'Unknown';
+      return "Unknown";
     }
   }
 
   escapeHtml(text) {
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
   }
 
   async openItem(item) {
     // Create a new tab with the item details
-    await chrome.tabs.create({ 
+    await chrome.tabs.create({
       url: item.url,
-      active: false 
+      active: false,
     });
 
     // Show item details in a modal or new popup
@@ -181,14 +224,14 @@ class PopupController {
     // For now, just copy summary to clipboard
     if (item.summary) {
       navigator.clipboard.writeText(item.summary).then(() => {
-        this.showNotification('Summary copied to clipboard!');
+        this.showNotification("Summary copied to clipboard!");
       });
     }
   }
 
   showNotification(message) {
     // Create a temporary notification
-    const notification = document.createElement('div');
+    const notification = document.createElement("div");
     notification.style.cssText = `
       position: fixed;
       top: 10px;
@@ -204,7 +247,7 @@ class PopupController {
     notification.textContent = message;
 
     // Add animation styles
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       @keyframes slideIn {
         from { transform: translateX(100%); opacity: 0; }
@@ -223,7 +266,7 @@ class PopupController {
   }
 
   showError(message) {
-    const itemsList = document.getElementById('itemsList');
+    const itemsList = document.getElementById("itemsList");
     itemsList.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">⚠️</div>
@@ -236,19 +279,19 @@ class PopupController {
   }
 
   async refresh() {
-    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshBtn = document.getElementById("refreshBtn");
     const originalText = refreshBtn.textContent;
-    
-    refreshBtn.textContent = '🔄 Refreshing...';
+
+    refreshBtn.textContent = "🔄 Refreshing...";
     refreshBtn.disabled = true;
 
     try {
       await this.loadStatus();
       await this.loadSummaries();
       this.updateDisplay();
-      this.showNotification('Refreshed successfully!');
+      this.showNotification("Refreshed successfully!");
     } catch (error) {
-      this.showError('Failed to refresh');
+      this.showError("Failed to refresh");
     } finally {
       refreshBtn.textContent = originalText;
       refreshBtn.disabled = false;
@@ -263,13 +306,13 @@ class PopupController {
 
   openSettings() {
     // Open options page or settings
-    chrome.runtime.openOptionsPage ? 
-      chrome.runtime.openOptionsPage() :
-      chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
+    chrome.runtime.openOptionsPage
+      ? chrome.runtime.openOptionsPage()
+      : chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
   }
 }
 
 // Initialize popup when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   new PopupController();
 });

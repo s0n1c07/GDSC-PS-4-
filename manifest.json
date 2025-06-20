@@ -13,13 +13,10 @@
     "scripting"
   ],
 
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "host_permissions": ["<all_urls>"],
 
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   },
 
   "content_scripts": [
@@ -30,14 +27,12 @@
     }
   ],
 
-  "options_page": "options.html",
-
   "web_accessible_resources": [
     {
       "resources": [
-        "webllm/*.wasm",
-        "webllm/*.json",
-        "webllm/*.params"
+        "llama-st/llama.wasm",
+        "llama-st/llama.js",
+        "llama-st/models/model.gguf"
       ],
       "matches": ["<all_urls>"]
     }
