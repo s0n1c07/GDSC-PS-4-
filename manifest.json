@@ -3,7 +3,7 @@
   "name": "Smart Content Summarizer",
   "version": "1.0.0",
   "description": "Track and summarize web content using local AI",
-  
+
   "permissions": [
     "tabs",
     "history",
@@ -12,16 +12,16 @@
     "activeTab",
     "scripting"
   ],
-  
+
   "host_permissions": [
     "<all_urls>"
   ],
-  
+
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-  
+
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -29,20 +29,21 @@
       "run_at": "document_idle"
     }
   ],
-  
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "Content Summarizer"
-  },
-  
+
+  "options_page": "options.html",
+
   "web_accessible_resources": [
     {
-      "resources": ["webllm/*"],
+      "resources": [
+        "webllm/*.wasm",
+        "webllm/*.json",
+        "webllm/*.params"
+      ],
       "matches": ["<all_urls>"]
     }
   ],
-  
+
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+    "extension_pages": "script-src 'self'; object-src 'self';"
   }
 }
