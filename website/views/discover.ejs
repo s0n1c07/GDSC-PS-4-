@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+<div class="page-header">
+    <h2>Discover Users</h2>
+    <p>See what others are summarizing.</p>
+</div>
+<ul class="user-list">
+    <% users.forEach(user => { %>
+        <li class="user-card">
+            <a href="/users/<%= user.username %>"><%= user.username %></a>
+        </li>
+    <% }) %>
+</ul>
+<%- include('partials/footer') %>

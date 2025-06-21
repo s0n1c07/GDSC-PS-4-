@@ -1,0 +1,32 @@
+<%- include('partials/header') %>
+
+<!-- Pass the User ID to the client-side script -->
+<script>
+    window.CURRENT_USER_ID = <%= user.id %>;
+</script>
+
+<div class="content-section">
+    <h2>My Dashboard (<%= user.username %>)</h2>
+    <p>Your automatically summarized web pages will appear here in real-time.</p>
+
+    <!-- Items loaded from the database will be rendered here -->
+    <% if (items.length === 0) { %>
+        <p>No items saved yet. Just browse the web with the extension active!</p>
+    <% } else { %>
+        <% items.forEach(item => { %>
+            <div class="item-card" data-url="<%= item.url %>">
+                <h3><a href="<%= item.url %>" target="_blank"><%= item.title || item.url %></a></h3>
+                <div class="summary">
+                    <strong>Summary:</strong>
+                    <p class="summary-text-content"><%= item.extracted_summary %></p>
+                </div>
+                <p class="meta">Saved on: <%= new Date(item.created_at).toLocaleString() %></p>
+            </div>
+        <% }) %>
+    <% } %>
+</div>
+
+<!-- This script handles the WebSocket connection and real-time updates -->
+<script src="/client.js"></script>
+
+<%- include('partials/footer') %>

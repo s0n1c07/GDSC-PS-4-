@@ -1,0 +1,127 @@
+<!-- START OF FILE public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Nexus - Discover & Summarize</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav>
+      <div class="container">
+        <div class="logo">URL Nexus</div>
+        <ul class="nav-links">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#profile" style="display: none">Dashboard</a></li>
+          <li><a href="#discover" style="display: none">Discover</a></li>
+          <li>
+            <a href="#logout" class="logout-btn" style="display: none"
+              >Logout</a
+            >
+          </li>
+        </ul>
+        <div class="status-indicator" id="llm-status">
+          <div class="status-light"></div>
+          <span id="llm-status-text">AI Idle</span>
+        </div>
+      </div>
+    </nav>
+    <main>
+      <section class="page-section" id="home">
+        <div class="hero">
+          <div class="hero-content">
+            <h1>The Future of Curated Content is Here</h1>
+            <p>
+              Automatically showcase your digital consumption. Follow others to
+              see what they're reading and watching, all powered by AI.
+            </p>
+            <div class="cta-buttons">
+              <a href="#auth" class="btn btn-primary">Get Started</a>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="page-section" id="auth" style="display: none">
+        <div class="auth-container">
+          <div class="auth-toggle">
+            <button class="auth-tab active" data-tab="login">Login</button
+            ><button class="auth-tab" data-tab="register">Register</button>
+          </div>
+          <div id="alert-container"></div>
+          <form id="login-form" class="auth-form">
+            <div class="form-group">
+              <label for="login-username">Username</label
+              ><input
+                type="text"
+                id="login-username"
+                name="username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="login-password">Password</label
+              ><input
+                type="password"
+                id="login-password"
+                name="password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%">
+              Login
+            </button>
+          </form>
+          <form id="register-form" class="auth-form" style="display: none">
+            <div class="form-group">
+              <label for="register-username">Username</label
+              ><input
+                type="text"
+                id="register-username"
+                name="username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="register-password">Password</label
+              ><input
+                type="password"
+                id="register-password"
+                name="password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%">
+              Register
+            </button>
+          </form>
+        </div>
+      </section>
+      <section class="page-section" id="profile" style="display: none">
+        <div class="container">
+          <div class="profile-header">
+            <h2 id="profile-username">Your Dashboard</h2>
+            <p>
+              Your automatically summarized pages will appear here in real-time.
+            </p>
+          </div>
+          <div class="items-grid" id="items-container"></div>
+        </div>
+      </section>
+      <section class="page-section" id="discover" style="display: none">
+        <div class="container">
+          <div class="profile-header">
+            <h2>Discover Users</h2>
+            <p>Explore what others are summarizing.</p>
+          </div>
+          <div class="users-grid" id="users-container"></div>
+        </div>
+      </section>
+    </main>
+    <script src="main.js"></script>
+  </body>
+</html>

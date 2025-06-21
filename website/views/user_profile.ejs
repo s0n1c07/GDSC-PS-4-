@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+<div class="page-header">
+    <h2><%= profileUser.username %>'s Dashboard</h2>
+    <p>A collection of their summarized content.</p>
+</div>
+<ul class="item-list">
+    <% items.forEach(item => { %>
+        <li class="item-card">
+            <h3><a href="<%= item.url %>" target="_blank"><%= item.title %></a></h3>
+            <div class="summary">
+                <p><%= item.extracted_summary %></p>
+            </div>
+            <p class="meta">Saved on: <%= new Date(item.created_at).toLocaleString() %></p>
+        </li>
+    <% }) %>
+</ul>
+<%- include('partials/footer') %>

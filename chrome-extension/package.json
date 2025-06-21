@@ -1,0 +1,27 @@
+{
+  "name": "readinglist-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension for automatic content tracking and reading list generation",
+  "main": "background/background.js",
+  "scripts": {
+    "build": "echo 'No build process needed - pure JavaScript extension'",
+    "zip": "zip -r readinglist-extension.zip . -x 'node_modules/*' '*.git/*' '*.DS_Store' 'package-lock.json'"
+  },
+  "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.79"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "chrome-extension",
+    "reading-list",
+    "content-tracking",
+    "llm",
+    "automation"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/readinglist-extension"
+  }
+}
