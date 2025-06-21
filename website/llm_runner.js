@@ -1,86 +1,109 @@
-// --- START OF FILE llm_runner.js ---
+// --- START OF FILE llm_runner.js (Advanced, Persistent Version) ---
+const { spawn } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs'); // Import the 'fs' module to check if files exist
-
-// --- CRITICAL: CONFIGURE THIS PATH ---
-// Use forward slashes. This path MUST point to the folder containing 'bin' and 'models'.
-const LLAMA_CPP_DIR = 'C:/Users/Rajve/OneDrive/Desktop/llama.cpp';
-
-// Use the EXACT filename of your model.
-const MODEL_NAME = 'tinyllama-1.1b-chat-v1.0-q4_k_m.gguf';
+// --- CONFIGURE THESE PATHS ---
+const LLAMA_CPP_DIR = "C:/Users/Rajve/OneDrive/Desktop/llama.cpp";
+const MODEL_NAME = "tinyllama-1.1b-chat-v1.0-q4_k_m.gguf";
 // -----------------------------------------
 
-const llamaExecutablePath = path.join(LLAMA_CPP_DIR, 'bin', 'Release', 'llama-cli.exe');
-const modelPath = path.join(LLAMA_CPP_DIR, 'models', MODEL_NAME);
+const llamaExecutablePath = path.join(
+  LLAMA_CPP_DIR,
+  "bin",
+  "Release",
+  "llama-cli.exe"
+);
+const modelPath = path.join(LLAMA_CPP_DIR, "models", MODEL_NAME);
 
-// --- Pre-run Sanity Checks ---
-if (!fs.existsSync(llamaExecutablePath)) {
-    throw new Error(`FATAL: Cannot find llama-cli.exe. Looked in: ${llamaExecutablePath}. Please check the LLAMA_CPP_DIR path in llm_runner.js.`);
-}
-if (!fs.existsSync(modelPath)) {
-    throw new Error(`FATAL: Cannot find model file. Looked for: ${modelPath}. Please check the MODEL_NAME in llm_runner.js and ensure the file is in the 'models' subfolder.`);
+let llamaProcess = null;
+let requestQueue = [];
+let isReady = false;
+
+function startLlmProcess() {
+  console.log("LLM Runner: Starting persistent AI engine process...");
+
+  // Arguments for interactive mode
+  const args = [
+    "-m",
+    modelPath,
+    "-n",
+    "-1", // Run indefinitely
+    "--color",
+    "-i", // Interactive mode
+    "-t",
+    "4",
+  ];
+
+  llamaProcess = spawn(llamaExecutablePath, args, { cwd: LLAMA_CPP_DIR });
+
+  llamaProcess.stdout.on("data", (data) => {
+    const text = data.toString();
+    // Check if there's a pending request to resolve
+    if (requestQueue.length > 0) {
+      const currentRequest = requestQueue.shift();
+      // Clean up the model's output to get only the summary
+      const summary = text.replace(currentRequest.prompt, "").trim();
+      currentRequest.resolve(summary);
+    }
+  });
+
+  llamaProcess.stderr.on("data", (data) => {
+    const text = data.toString();
+    console.log(`LLM_STDERR: ${text}`);
+    // The model is ready for input when it prints the prompt indicator `>`
+    if (text.includes(">")) {
+      if (!isReady) {
+        console.log("LLM Runner: AI Engine is ready and waiting for requests.");
+        isReady = true;
+      }
+      // Handle any pending requests that came in while loading
+      if (requestQueue.length > 0) {
+        const pending = requestQueue[0];
+        if (!pending.isSent) {
+          llamaProcess.stdin.write(pending.prompt + "\n");
+          pending.isSent = true;
+        }
+      }
+    }
+  });
+
+  llamaProcess.on("close", (code) => {
+    console.error(
+      `LLM Runner: AI Engine process exited unexpectedly with code ${code}. Restarting...`
+    );
+    isReady = false;
+    llamaProcess = null;
+    setTimeout(startLlmProcess, 5000); // Attempt to restart after 5s
+  });
+
+  llamaProcess.on("error", (err) => {
+    console.error("LLM Runner: FATAL - Could not spawn the process.", err);
+  });
 }
 
+// Start the single, persistent process when the module is loaded
+startLlmProcess();
 
 async function getSummaryWithProgress(text, progressCallback) {
-    console.log("LLM Runner: Starting process on CPU...");
-    
-    return new Promise((resolve, reject) => {
-        const prompt = `Summarize the following content in 2-3 key sentences. Content:\n\n${text}\n\nSummary:`;
-        
-        // Arguments for the command-line tool
-        const args = [
-            '-m', modelPath,      // Model path
-            '-n', '128',          // Max tokens to generate
-            '--prompt', prompt,   // The prompt
-            '-t', '4'             // Number of CPU threads to use
-        ];
-        
-        console.log(`LLM Runner: Spawning executable at ${llamaExecutablePath}`);
+  // For now, we simulate progress since we get the result in one chunk
+  progressCallback(25);
 
-        const llamaProcess = spawn(llamaExecutablePath, args, { cwd: LLAMA_CPP_DIR });
+  const prompt = `Summarize the following content in 2-3 key sentences. Content:\n\n${text}\n\nSummary:`;
 
-        let summary = '';
-        let errorOutput = '';
+  return new Promise((resolve, reject) => {
+    const request = { prompt, resolve, reject, isSent: false };
+    requestQueue.push(request);
 
-        // Capture error messages from the process
-        llamaProcess.stderr.on('data', (data) => {
-            const output = data.toString();
-            errorOutput += output;
-            // Look for the percentage pattern like "[ 25.1%]"
-            const progressMatch = output.match(/\[\s*(\d+\.?\d*)\s*%\]/);
-            if (progressMatch && progressMatch[1]) {
-                const percentage = Math.round(parseFloat(progressMatch[1]));
-                progressCallback(percentage);
-            }
-        });
-
-        // Capture the successful summary output
-        llamaProcess.stdout.on('data', (data) => {
-            summary += data.toString();
-        });
-
-        // Handle process exit
-        llamaProcess.on('close', (code) => {
-            console.log(`LLM process exited with code ${code}`);
-            if (code === 0) {
-                progressCallback(100); // Ensure it finishes at 100%
-                const finalSummary = summary.split("Summary:")[1]?.trim() || "Summary could not be extracted from model output.";
-                resolve(finalSummary);
-            } else {
-                console.error("LLM Runner: Process failed. Full error output:", errorOutput);
-                reject(new Error(`LLM process failed with code ${code}. Check server console.`));
-            }
-        });
-
-        // Handle fatal errors, like if the .exe can't be started at all
-        llamaProcess.on('error', (err) => {
-            console.error("LLM Runner: FATAL - Could not spawn the process. Check file paths and permissions.", err);
-            reject(new Error("Failed to start the LLM executable."));
-        });
-    });
+    // If the model is ready, send the request immediately
+    if (isReady) {
+      llamaProcess.stdin.write(prompt + "\n");
+      request.isSent = true;
+    }
+  }).then((summary) => {
+    progressCallback(100);
+    return summary;
+  });
 }
 
 module.exports = { getSummaryWithProgress };
