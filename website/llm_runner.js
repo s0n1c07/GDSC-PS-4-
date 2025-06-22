@@ -1,4 +1,4 @@
-// --- START OF FILE website/llm_runner.js (Final, Guaranteed Parser Version) ---
+// --- START OF FILE website/llm_runner.js (Final, Perfected Version) ---
 
 const { spawn } = require('child_process');
 const path = require('path');
@@ -7,7 +7,8 @@ const os = require('os');
 
 // --- CRITICAL: CONFIGURE THESE PATHS ---
 const LLAMA_CPP_DIR = 'C:/Users/Rajve/OneDrive/Desktop/llama.cpp';
-const MODEL_NAME = 'phi-2.Q2_K.gguf';
+// You chose a good, fast model. Let's stick with it.
+const MODEL_NAME = 'gpt2-medium-q4_0.gguf';
 // -----------------------------------------
 
 const llamaExecutablePath = path.join(LLAMA_CPP_DIR, 'bin', 'Release', 'llama-cli.exe');
@@ -16,44 +17,53 @@ const modelPath = path.join(LLAMA_CPP_DIR, 'models', MODEL_NAME);
 if (!fs.existsSync(llamaExecutablePath)) throw new Error(`FATAL: Cannot find llama-cli.exe at ${llamaExecutablePath}`);
 if (!fs.existsSync(modelPath)) throw new Error(`FATAL: Cannot find model file at ${modelPath}`);
 
+
 async function getSummaryWithProgress(text, progressCallback) {
-    // --- THE FINAL, BEST PROMPT ---
-    // We put the instruction *after* the text. This often works better.
-    const prompt = `ARTICLE:\n"""\n${text}\n"""\n\nINSTRUCTION: Based on the article above, provide a concise summary.\nSUMMARY:`;
-    
+    // A clean prompt for the AI.
+    const cleanText = text.substring(0, 1500);
+    const prompt = `Article content: ${cleanText}\n\nWrite a short summary:\n\n`;
+
     return new Promise((resolve, reject) => {
         const uniqueId = `job-${Date.now()}`;
         const tempDir = os.tmpdir();
         const promptFilePath = path.join(tempDir, `${uniqueId}-prompt.txt`);
-        
-        fs.writeFileSync(promptFilePath, prompt);
-        console.log(`[LLM] Wrote final prompt to: ${promptFilePath}`);
 
+        fs.writeFileSync(promptFilePath, prompt);
+        console.log(`[LLM] Wrote prompt to: ${promptFilePath}`);
+
+        // --- THE FINAL, CORRECT PARAMETERS ---
         const args = [
             '-m', modelPath,
             '-f', promptFilePath,
-            '-n', '128', // Max length of the summary
-            '-t', '4',
-            '--temp', '0.2',
-            '--repeat-penalty', '1.1'
+            '-n', '100',
+            '-t', '6',
+            '--temp', '0.4',
+            '--repeat-penalty', '1.1',
+            '--batch-size', '256',
+            '--ctx-size', '512',
+            '--no-mmap',
+            '--threads-batch', '6',
+            // THIS IS THE MOST IMPORTANT FIX:
+            '--no-display-prompt'
         ];
-        
+
         console.log("[LLM] Spawning file-based process...");
         const llamaProcess = spawn(llamaExecutablePath, args, { cwd: LLAMA_CPP_DIR });
 
-        let fullStdoutOutput = '';
-        let fullStderrOutput = '';
+        let finalSummaryOutput = ''; // This will ONLY contain the summary
+        let errorLogOutput = '';     // This will contain logs
 
+        // The AI's answer will be the only thing on stdout
         llamaProcess.stdout.on('data', (data) => {
-            fullStdoutOutput += data.toString();
+            finalSummaryOutput += data.toString();
         });
 
+        // Logs and progress are on stderr
         llamaProcess.stderr.on('data', (data) => {
-            fullStderrOutput += data.toString();
-            // This progress simulation is a best-effort guess
-            if (fullStderrOutput.includes("llm_load_t")) progressCallback(25);
-            if (fullStderrOutput.includes("sample_t")) progressCallback(50);
-            if (fullStderrOutput.includes("prompt_eval_t")) progressCallback(75);
+            errorLogOutput += data.toString();
+            if (errorLogOutput.includes("llm_load_t")) progressCallback(25);
+            if (errorLogOutput.includes("sample_t")) progressCallback(50);
+            if (errorLogOutput.includes("prompt_eval_t")) progressCallback(75);
         });
 
         llamaProcess.on('close', (code) => {
@@ -62,32 +72,20 @@ async function getSummaryWithProgress(text, progressCallback) {
 
             if (fs.existsSync(promptFilePath)) fs.unlinkSync(promptFilePath);
 
-            if (code === 0 && fullStdoutOutput) {
-                try {
-                    // --- THE FINAL, BULLETPROOF PARSER ---
-                    // The AI's actual summary is the ONLY thing written to stdout.
-                    // The original prompt is NOT included in stdout with the --file command.
-                    
-                    const summary = fullStdoutOutput.trim();
+            if (code === 0 && finalSummaryOutput) {
+                // --- THE NEW, SIMPLE PARSER ---
+                // No complex cleaning needed. The output IS the summary.
+                const cleanSummary = finalSummaryOutput.trim();
 
-                    if (!summary) {
-                        throw new Error("Model generated an empty summary.");
-                    }
-
-                    console.log(`[LLM] Extracted Summary: "${summary}"`);
-                    resolve(summary);
-
-                } catch (parseError) {
-                    console.error("[LLM] FAILED TO PARSE OUTPUT. THIS IS THE FINAL DEBUGGING STEP.");
-                    console.error("--- FULL STDOUT (The AI's direct response) ---");
-                    console.error(fullStdoutOutput);
-                    console.error("--- FULL STDERR (Logs and errors from the program) ---");
-                    console.error(fullStderrOutput);
-                    console.error("-------------------------------------------------");
-                    reject(parseError);
+                if (!cleanSummary) {
+                    throw new Error("Model generated an empty summary.");
                 }
+
+                console.log(`[LLM] Extracted Clean Summary: "${cleanSummary}"`);
+                resolve(cleanSummary);
+
             } else {
-                console.error("[LLM] Process failed or produced no output. Full error log from stderr:", fullStderrOutput);
+                console.error("[LLM] Process failed or produced no output. Full error log:", errorLogOutput);
                 reject(new Error(`LLM process failed.`));
             }
         });
