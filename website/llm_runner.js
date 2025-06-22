@@ -1,109 +1,83 @@
-// --- START OF FILE llm_runner.js (Advanced, Persistent Version) ---
-const { spawn } = require("child_process");
-const path = require("path");
-const fs = require("fs");
+// --- START OF FILE website/llm_runner.js (Final, Bug-Fixed Version) ---
 
-// --- CONFIGURE THESE PATHS ---
-const LLAMA_CPP_DIR = "C:/Users/Rajve/OneDrive/Desktop/llama.cpp";
-const MODEL_NAME = "tinyllama-1.1b-chat-v1.0-q4_k_m.gguf";
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+// --- CRITICAL: CONFIGURE THESE PATHS ---
+const LLAMA_CPP_DIR = 'C:/Users/Rajve/OneDrive/Desktop/llama.cpp';
+const MODEL_NAME = 'tinyllama-1.1b-chat-v1.0-q4_k_m.gguf';
 // -----------------------------------------
 
-const llamaExecutablePath = path.join(
-  LLAMA_CPP_DIR,
-  "bin",
-  "Release",
-  "llama-cli.exe"
-);
-const modelPath = path.join(LLAMA_CPP_DIR, "models", MODEL_NAME);
+const llamaExecutablePath = path.join(LLAMA_CPP_DIR, 'bin', 'Release', 'llama-cli.exe');
+const modelPath = path.join(LLAMA_CPP_DIR, 'models', MODEL_NAME);
 
-let llamaProcess = null;
-let requestQueue = [];
-let isReady = false;
-
-function startLlmProcess() {
-  console.log("LLM Runner: Starting persistent AI engine process...");
-
-  // Arguments for interactive mode
-  const args = [
-    "-m",
-    modelPath,
-    "-n",
-    "-1", // Run indefinitely
-    "--color",
-    "-i", // Interactive mode
-    "-t",
-    "4",
-  ];
-
-  llamaProcess = spawn(llamaExecutablePath, args, { cwd: LLAMA_CPP_DIR });
-
-  llamaProcess.stdout.on("data", (data) => {
-    const text = data.toString();
-    // Check if there's a pending request to resolve
-    if (requestQueue.length > 0) {
-      const currentRequest = requestQueue.shift();
-      // Clean up the model's output to get only the summary
-      const summary = text.replace(currentRequest.prompt, "").trim();
-      currentRequest.resolve(summary);
-    }
-  });
-
-  llamaProcess.stderr.on("data", (data) => {
-    const text = data.toString();
-    console.log(`LLM_STDERR: ${text}`);
-    // The model is ready for input when it prints the prompt indicator `>`
-    if (text.includes(">")) {
-      if (!isReady) {
-        console.log("LLM Runner: AI Engine is ready and waiting for requests.");
-        isReady = true;
-      }
-      // Handle any pending requests that came in while loading
-      if (requestQueue.length > 0) {
-        const pending = requestQueue[0];
-        if (!pending.isSent) {
-          llamaProcess.stdin.write(pending.prompt + "\n");
-          pending.isSent = true;
-        }
-      }
-    }
-  });
-
-  llamaProcess.on("close", (code) => {
-    console.error(
-      `LLM Runner: AI Engine process exited unexpectedly with code ${code}. Restarting...`
-    );
-    isReady = false;
-    llamaProcess = null;
-    setTimeout(startLlmProcess, 5000); // Attempt to restart after 5s
-  });
-
-  llamaProcess.on("error", (err) => {
-    console.error("LLM Runner: FATAL - Could not spawn the process.", err);
-  });
-}
-
-// Start the single, persistent process when the module is loaded
-startLlmProcess();
+if (!fs.existsSync(llamaExecutablePath)) throw new Error(`FATAL: Cannot find llama-cli.exe. Looked in: ${llamaExecutablePath}`);
+if (!fs.existsSync(modelPath)) throw new Error(`FATAL: Cannot find model file. Looked for: ${modelPath}`);
 
 async function getSummaryWithProgress(text, progressCallback) {
-  // For now, we simulate progress since we get the result in one chunk
-  progressCallback(25);
+    const prompt = `<|system|>\nYou are a helpful assistant that provides concise, one-sentence summaries of web content.\n<|user|>\nSummarize the following text in a single, informative sentence:\n\n${text}\n<|assistant|>\n`;
 
-  const prompt = `Summarize the following content in 2-3 key sentences. Content:\n\n${text}\n\nSummary:`;
+    return new Promise((resolve, reject) => {
+        console.log("[LLM] Spawning one-shot process...");
 
-  return new Promise((resolve, reject) => {
-    const request = { prompt, resolve, reject, isSent: false };
-    requestQueue.push(request);
+        const args = [
+            '-m', modelPath,
+            '-n', '128',
+            '--prompt', prompt,
+            '-t', '4',
+            '--temp', '0.2',
+            '--repeat-penalty', '1.2',
+            '-r', '<|user|>',
+            '-r', '\n'
+        ];
 
-    // If the model is ready, send the request immediately
-    if (isReady) {
-      llamaProcess.stdin.write(prompt + "\n");
-      request.isSent = true;
-    }
-  }).then((summary) => {
-    progressCallback(100);
-    return summary;
-  });
+        const llamaProcess = spawn(llamaExecutablePath, args, { cwd: LLAMA_CPP_DIR });
+
+        let finalOutput = '';
+        let errorOutput = '';
+
+        llamaProcess.stdout.on('data', (data) => {
+            finalOutput += data.toString();
+        });
+
+        // Capture progress percentages and errors from stderr
+        llamaProcess.stderr.on('data', (data) => {
+            // --- THIS IS THE FIX ---
+            // We define 'output' from the 'data' chunk before using it.
+            const output = data.toString();
+            errorOutput += output;
+
+            const progressMatch = output.match(/\[\s*(\d+\.?\d*)\s*%\]/);
+            if (progressMatch && progressMatch[1]) {
+                progressCallback(Math.round(parseFloat(progressMatch[1])));
+            }
+        });
+
+        llamaProcess.on('close', (code) => {
+            console.log(`[LLM] Process finished with code ${code}`);
+            if (code === 0 && finalOutput) {
+                progressCallback(100);
+                const assistantMarker = "<|assistant|>";
+                const startIndex = finalOutput.indexOf(assistantMarker);
+
+                if (startIndex !== -1) {
+                    let summary = finalOutput.substring(startIndex + assistantMarker.length).trim();
+                    summary = summary.split('<|user|>')[0].trim().split('\n')[0].trim();
+                    console.log(`[LLM] Extracted Summary: "${summary}"`);
+                    resolve(summary);
+                } else {
+                    console.error("[LLM] Could not find assistant marker in output. Full output:", finalOutput);
+                    reject(new Error("Failed to parse model output."));
+                }
+            } else {
+                console.error("[LLM] Process failed or produced no output. Error log:", errorOutput);
+                reject(new Error(`LLM process failed. See server console.`));
+            }
+        });
+
+        llamaProcess.on('error', (err) => reject(err));
+    });
 }
 
 module.exports = { getSummaryWithProgress };
