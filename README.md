@@ -37,7 +37,7 @@ The project consists of two main components:
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/s0n1c07/GDSC-PS-4-
 cd reading-watchlist-extension
 ```
 
@@ -195,26 +195,5 @@ Current setup uses GPT-2 Medium with these parameters:
 
 ### Debug Mode
 Enable debug logging by checking browser console and server logs for detailed error information.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📞 Support
-
-For support and questions:
-- Open an issue on GitHub
-- Check the troubleshooting section above
-- Review the configuration settings
-
----
 
 **Note**: This project requires local AI model setup and is designed for personal use and development purposes. Ensure you have adequate system resources for running local language models.
