@@ -1,7 +1,7 @@
 {
-  "name": "url-nexus-website",
+  "name": "Reading and Watch-List Dashboard Web App-website",
   "version": "1.0.0",
-  "description": "Website for URL Nexus",
+  "description": "Reading and Watch-List Dashboard Web App",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

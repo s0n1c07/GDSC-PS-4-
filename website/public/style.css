@@ -1,9 +1,11 @@
-/* --- START OF FILE public/style.css --- */
+/* --- START OF FILE public/style.css (Final, Complete Version) --- */
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 :root {
   --primary-color: #6366f1;
   --primary-hover: #4f46e5;
@@ -19,6 +21,7 @@
   --success-color: #22c55e;
   --gradient-1: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
 }
+
 body {
   font-family: "Inter", sans-serif;
   background: var(--bg-color);
@@ -26,29 +29,36 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
 }
+
 main {
   padding-top: 60px; /* Account for fixed nav */
 }
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
 }
+
+/* --- Navigation --- */
 nav {
   position: fixed;
   top: 0;
   width: 100%;
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
   z-index: 1000;
 }
+
 nav .container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
 }
+
 .logo {
   font-size: 1.5rem;
   font-weight: 700;
@@ -56,12 +66,14 @@ nav .container {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
 .nav-links {
   display: flex;
   list-style: none;
   gap: 2rem;
   align-items: center;
 }
+
 .nav-links a {
   color: var(--text-secondary);
   text-decoration: none;
@@ -70,9 +82,12 @@ nav .container {
   padding: 0.5rem 0;
   cursor: pointer;
 }
+
 .nav-links a:hover {
   color: var(--primary-color);
 }
+
+/* --- Status Indicator --- */
 .status-indicator {
   display: flex;
   align-items: center;
@@ -82,6 +97,7 @@ nav .container {
   border-radius: 20px;
   font-size: 0.85rem;
 }
+
 .status-light {
   width: 8px;
   height: 8px;
@@ -89,10 +105,12 @@ nav .container {
   background: var(--danger-color);
   transition: all 0.3s ease;
 }
+
 .status-indicator.active .status-light {
   background: var(--success-color);
   animation: pulse 2s infinite;
 }
+
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
@@ -104,10 +122,13 @@ nav .container {
     box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
   }
 }
+
+/* --- Page Sections & Hero --- */
 .page-section {
   padding: 4rem 0;
   min-height: 90vh;
 }
+
 .hero {
   display: flex;
   align-items: center;
@@ -115,10 +136,12 @@ nav .container {
   text-align: center;
   height: calc(100vh - 60px);
 }
+
 .hero-content {
   z-index: 1;
   max-width: 800px;
 }
+
 .hero h1 {
   font-size: 4rem;
   font-weight: 700;
@@ -128,17 +151,20 @@ nav .container {
   -webkit-text-fill-color: transparent;
   animation: slideUp 1s ease-out;
 }
+
 .hero p {
   font-size: 1.25rem;
   color: var(--text-secondary);
   margin-bottom: 2rem;
   animation: slideUp 1s ease-out 0.2s both;
 }
+
 .cta-buttons {
   display: flex;
   gap: 1rem;
   justify-content: center;
 }
+
 .btn {
   padding: 1rem 2rem;
   border: none;
@@ -149,29 +175,45 @@ nav .container {
   transition: all 0.3s ease;
   text-decoration: none;
 }
+
 .btn-primary {
   background: var(--gradient-1);
   color: white;
   box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
 }
+
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
 }
+
+/* --- Auth Section (Two-Column Layout) --- */
 .auth-section {
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.auth-container {
+
+.auth-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rem;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.auth-form-wrapper {
   background: var(--surface-color);
   border-radius: 20px;
   padding: 3rem;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   border: 1px solid var(--border-color);
-  max-width: 400px;
   width: 100%;
+  max-width: 400px;
+  flex-shrink: 0; /* Prevents the form from shrinking */
 }
+
 .auth-toggle {
   display: flex;
   margin-bottom: 2rem;
@@ -179,6 +221,7 @@ nav .container {
   border-radius: 12px;
   padding: 0.25rem;
 }
+
 .auth-toggle button {
   flex: 1;
   padding: 0.75rem;
@@ -189,13 +232,16 @@ nav .container {
   border-radius: 8px;
   font-weight: 500;
 }
+
 .auth-toggle button.active {
   background: var(--primary-color);
   color: white;
 }
+
 .form-group {
   margin-bottom: 1.5rem;
 }
+
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
@@ -203,6 +249,7 @@ nav .container {
   font-weight: 500;
   text-align: left;
 }
+
 .form-group input {
   width: 100%;
   padding: 1rem;
@@ -212,43 +259,92 @@ nav .container {
   color: var(--text-primary);
   font-size: 1rem;
 }
+
 .form-group input:focus {
   outline: none;
   border-color: var(--primary-color);
 }
+
 .alert {
   padding: 1rem;
   border-radius: 12px;
   margin-bottom: 1rem;
   font-weight: 500;
 }
+
 .alert-error {
   background: rgba(239, 68, 68, 0.1);
   color: var(--danger-color);
 }
+
 .alert-success {
   background: rgba(34, 197, 94, 0.1);
   color: var(--success-color);
 }
+
+/* --- Auth Section Image --- */
+.auth-hero-image {
+  flex-grow: 1;
+  position: relative;
+}
+
+.auth-hero-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+}
+
+.hero-image-text {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  right: 2rem;
+  color: white;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.hero-image-text h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+}
+
+.hero-image-text p {
+  margin: 0;
+  color: var(--secondary-color);
+}
+
+/* --- Profile & Discover Pages --- */
 .profile-header {
   text-align: center;
   margin-bottom: 4rem;
 }
+
 .profile-header h2 {
   font-size: 3rem;
   margin-bottom: 1rem;
 }
+
 .items-grid,
 .users-grid {
   display: grid;
   gap: 2rem;
 }
+
 .items-grid {
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
 }
+
 .users-grid {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
+
 .item-card,
 .user-card {
   background: var(--surface-color);
@@ -260,23 +356,29 @@ nav .container {
   overflow: hidden;
   animation: fadeIn 0.5s ease-out;
 }
+
 .item-card:hover,
 .user-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
 }
+
 .item-card h3 {
   margin-bottom: 1rem;
   font-size: 1.25rem;
   font-weight: 600;
 }
+
 .item-card h3 a {
   color: var(--text-primary);
   text-decoration: none;
 }
+
 .item-card h3 a:hover {
   color: var(--primary-color);
 }
+
+/* --- Spinner --- */
 .processing-status {
   display: flex;
   align-items: center;
@@ -286,11 +388,13 @@ nav .container {
   background: var(--card-color);
   border-radius: 12px;
 }
+
 .spinner-container {
   position: relative;
   width: 40px;
   height: 40px;
 }
+
 .spinner {
   width: 100%;
   height: 100%;
@@ -301,6 +405,7 @@ nav .container {
   justify-content: center;
   position: relative;
 }
+
 .spinner::before {
   content: "";
   position: absolute;
@@ -309,11 +414,13 @@ nav .container {
   background: var(--card-color);
   border-radius: 50%;
 }
+
 .spinner-percent {
   position: absolute;
   font-size: 0.7rem;
   font-weight: 600;
 }
+
 .summary {
   margin-top: 1rem;
   padding: 1rem;
@@ -321,19 +428,23 @@ nav .container {
   border-radius: 12px;
   border-left: 4px solid var(--accent-color);
 }
+
 .summary strong {
   color: var(--accent-color);
   display: block;
   margin-bottom: 0.5rem;
 }
+
 .meta {
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-top: 1rem;
 }
+
 .user-card {
   text-align: center;
 }
+
 .user-avatar {
   width: 60px;
   height: 60px;
@@ -347,17 +458,34 @@ nav .container {
   font-weight: 700;
   color: white;
 }
+
 .user-card h3 {
   font-size: 1.1rem;
 }
+
 .user-card a {
   color: var(--text-primary);
   text-decoration: none;
   font-weight: 500;
 }
+
 .user-card a:hover {
   color: var(--primary-color);
 }
+
+/* --- Responsive & Animations --- */
+@media (max-width: 900px) {
+  .auth-layout {
+    flex-direction: column;
+  }
+  .auth-hero-image {
+    display: none; /* Hide image on smaller screens */
+  }
+  .nav-links {
+    display: none; /* Can be replaced with a hamburger menu */
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -368,6 +496,7 @@ nav .container {
     transform: translateY(0);
   }
 }
+
 @keyframes slideUp {
   from {
     opacity: 0;

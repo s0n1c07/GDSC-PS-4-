@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "URL Nexus Engine",
+  "name": "Reading and Watch-List Extension",
   "version": "5.0.0",
-  "description": "The silent browser companion for URL Nexus.",
+  "description": "The silent browser companion for Reading and Watch-List Extension.",
   "permissions": ["storage", "activeTab", "scripting", "notifications"],
   "host_permissions": ["<all_urls>"],
   "action": {

@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>URL Nexus - Discover & Summarize</title>
+    <title>Reading and Watch-List Dashboard Web App</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
@@ -14,7 +14,7 @@
   <body>
     <nav>
       <div class="container">
-        <div class="logo">URL Nexus</div>
+        <div class="logo">Reading and Watch-List Dashboard Web App</div>
         <ul class="nav-links">
           <li><a href="#home">Home</a></li>
           <li><a href="#profile" style="display: none">Dashboard</a></li>
@@ -46,59 +46,77 @@
           </div>
         </div>
       </section>
+      <!-- Auth Section (UPDATED with a new layout container) -->
       <section class="page-section" id="auth" style="display: none">
-        <div class="auth-container">
-          <div class="auth-toggle">
-            <button class="auth-tab active" data-tab="login">Login</button
-            ><button class="auth-tab" data-tab="register">Register</button>
+        <div class="auth-layout container">
+          <!-- Column 1: The Login/Register Form -->
+          <div class="auth-form-wrapper">
+            <div class="auth-toggle">
+              <button class="auth-tab active" data-tab="login">Login</button>
+              <button class="auth-tab" data-tab="register">Register</button>
+            </div>
+            <div id="alert-container"></div>
+            <form id="login-form" class="auth-form">
+              <div class="form-group">
+                <label for="login-username">Username</label>
+                <input
+                  type="text"
+                  id="login-username"
+                  name="username"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="login-password">Password</label>
+                <input
+                  type="password"
+                  id="login-password"
+                  name="password"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%">
+                Login
+              </button>
+            </form>
+            <form id="register-form" class="auth-form" style="display: none">
+              <div class="form-group">
+                <label for="register-username">Username</label>
+                <input
+                  type="text"
+                  id="register-username"
+                  name="username"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="register-password">Password</label>
+                <input
+                  type="password"
+                  id="register-password"
+                  name="password"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%">
+                Register
+              </button>
+            </form>
           </div>
-          <div id="alert-container"></div>
-          <form id="login-form" class="auth-form">
-            <div class="form-group">
-              <label for="login-username">Username</label
-              ><input
-                type="text"
-                id="login-username"
-                name="username"
-                required
-              />
+
+          <!-- NEW: Column 2: The Hero Image -->
+          <div class="auth-hero-image">
+            <img
+              src="https://www.shutterstock.com/image-vector/text-summarization-vector-artificial-intelligence-260nw-2283633213.jpg"
+              <!-- alt="Abstract technology network" -->
+            />
+            <div class="hero-image-text">
+              <h2>Summarize Your Life</h2>
+              <p>
+                Connect, summarize, and discover with the power of local AI.
+              </p>
             </div>
-            <div class="form-group">
-              <label for="login-password">Password</label
-              ><input
-                type="password"
-                id="login-password"
-                name="password"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%">
-              Login
-            </button>
-          </form>
-          <form id="register-form" class="auth-form" style="display: none">
-            <div class="form-group">
-              <label for="register-username">Username</label
-              ><input
-                type="text"
-                id="register-username"
-                name="username"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label for="register-password">Password</label
-              ><input
-                type="password"
-                id="register-password"
-                name="password"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%">
-              Register
-            </button>
-          </form>
+          </div>
         </div>
       </section>
       <section class="page-section" id="profile" style="display: none">
