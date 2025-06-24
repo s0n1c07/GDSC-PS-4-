@@ -1,3 +1,5 @@
+// --- START OF FILE database.js (No Corrections Needed) ---
+
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 
